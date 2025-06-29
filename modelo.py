@@ -11,11 +11,11 @@ def obtener_prediccion(departamento, municipio, dia_prediccion):
      inicio_dia = pd.to_datetime(dia_prediccion + ' 00:00:00+00:00')
      fin_dia = pd.to_datetime(dia_prediccion + ' 23:59:59+00:00')
      #Carga de los archivos csv por año ubicados en: https://drive.google.com/drive/folders/10BtFS1WbWR7ZQ19MlgSB74CF0we8ztUB?usp=drive_link 
-     df_2023 = pd.read_csv('D:/DevHitss/unir/Maestria/TFM/humedad_5a/TFM.humedad_2023.csv')
-     df_2024 = pd.read_csv('D:/DevHitss/unir/Maestria/TFM/humedad_5a/TFM.humedad_2024.csv')
-     df_2025 = pd.read_csv('D:/DevHitss/unir/Maestria/TFM/humedad_5a/TFM.humedad_2025.csv')
-     df_2025_2 = pd.read_csv('D:/DevHitss/unir/Maestria/TFM/humedad_5a/TFM.humedad_2025_may_jun.csv')
-     #Concatenación de los 6 archivos en un solo dataframe llamado df_concat
+     df_2023 = pd.read_csv('C:/equipo/DevHitss/unir/Maestria/TFM/humedad_5a/TFM.humedad_2023.csv')
+     df_2024 = pd.read_csv('C:/equipo/DevHitss/unir/Maestria/TFM/humedad_5a/TFM.humedad_2024.csv')
+     df_2025 = pd.read_csv('C:/equipo/DevHitss/unir/Maestria/TFM/humedad_5a/TFM.humedad_2025.csv')
+     df_2025_2 = pd.read_csv('C:/equipo/DevHitss/unir/Maestria/TFM/humedad_5a/TFM.humedad_2025_may_jun.csv')
+         #Concatenación de los 6 archivos en un solo dataframe llamado df_concat
      df_concat = pd.concat([df_2023, df_2024, df_2025, df_2025_2], axis=0, ignore_index=True)
      df_concat = df_concat.drop('_id', axis=1)
      #Asegurarnos que la fechamedida sea un tipo de dato datetime
@@ -43,6 +43,12 @@ def obtener_prediccion(departamento, municipio, dia_prediccion):
      predicciones_df = predicciones.predicted_mean
      predicciones_df.index = forecast_index
      predicciones_df = predicciones_df.reset_index()
+     forecast_values = predicciones.predicted_mean
+     df_intervalos_confianza = predicciones.conf_int()
+     df_intervalos_confianza.index = pd.to_datetime(df_intervalos_confianza.index).tz_localize(None)
+     df_intervalos_confianza.columns = ['Intervalo inferior', 'Intervalo superior']
+     df_intervalos_confianza = df_intervalos_confianza.reset_index()
+     df_intervalos_confianza = df_intervalos_confianza.rename(columns={'index': 'Hora'})
      predicciones_df.columns = ['Hora', 'humedad_predicha']
      predicciones_df['Hora'] = pd.to_datetime(predicciones_df['Hora'])
      predicciones_df['Hora'] = predicciones_df['Hora'].dt.tz_localize(None)
@@ -50,7 +56,8 @@ def obtener_prediccion(departamento, municipio, dia_prediccion):
      df_real_agrupado['fechamedida'] = pd.to_datetime(df_real_agrupado['fechamedida'])
      df_real_agrupado['fechamedida'] = df_real_agrupado['fechamedida'].dt.tz_localize(None)
      df_real_agrupado.rename(columns={'fechamedida': 'Hora'}, inplace=True)
-     df_final = pd.merge(predicciones_df, df_real_agrupado, on='Hora', how='outer')
+     df_final_previo = pd.merge(predicciones_df, df_real_agrupado, on='Hora', how='outer')
+     df_final = pd.merge(df_final_previo, df_intervalos_confianza, on='Hora', how='outer')
      # Ordenar por tiempo para asegurar que la gráfica se vea bien
      df_final.sort_values('Hora', inplace=True)
      

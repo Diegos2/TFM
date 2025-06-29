@@ -101,7 +101,9 @@ app.layout = dbc.Container([
                 columns=[
                     {'name': 'Hora', 'id': 'Hora'},
                     {'name': 'valorobservado', 'id': 'valorobservado'},
-                    {'name': 'humedad_predicha', 'id': 'humedad_predicha'}
+                    {'name': 'humedad_predicha', 'id': 'humedad_predicha'},
+                    {'name': 'Intervalo inferior', 'id': 'Intervalo inferior'},
+                    {'name': 'Intervalo superior', 'id': 'Intervalo superior'}
                 ],
                 style_table={'overflowX': 'auto'},
                 style_cell={'textAlign': 'center'}
@@ -143,11 +145,38 @@ def ejecutar_modelo(n_clicks, departamento, municipio, fecha):
             x=df['Hora'], y=df['humedad_predicha'],
             mode='lines+markers', name='Humedad Predicha'
         ))
-
+        figura.add_trace(go.Scatter(
+            x=df['Hora'],
+            y=df['Intervalo inferior'],
+            mode='lines',
+            line=dict(color='orange', width=1), # Color para la línea del intervalo
+            name='Intervalo de Confianza', # Un solo nombre para el par de líneas
+            fill='tonexty', # Rellena el área hasta el siguiente trace
+            fillcolor='rgba(255, 255, 0, 0.1)', # Color con transparencia (rojo, alpha=0.2)
+            showlegend=True # Muestra esta entrada en la leyenda
+        ))
+        
+        # 4. Graficar 'Intervalo superior' (el 'nexty' del trace anterior)
+        figura.add_trace(go.Scatter(
+            x=df['Hora'],
+            y=df['Intervalo superior'],
+            mode='lines',
+            line=dict(color='orange', width=1), # Mismo color que la línea inferior
+            name='_hide_this_trace', # Nombre que no se mostrará en la leyenda
+            fill='tonexty', # Rellena el área hasta el siguiente trace
+            fillcolor='rgba(255, 255, 0, 0.2)', # Color con transparencia (rojo, alpha=0.2)
+            showlegend=False # NO mostrar esta entrada en la leyenda
+        ))
         figura.update_layout(
-            title='Predicción vs Observado',
-            xaxis_title='Hora',
-            yaxis_title='Humedad (%)',
+            title={
+                'text': 'Comparación de Valor Observado y Humedad Predicha con Intervalo de Confianza',
+                'font': {'size': 25}
+            },
+            xaxis_title={'text': 'Fecha y Hora', 'font': {'size': 20}},
+            yaxis_title={'text': 'Valores', 'font': {'size': 20}},
+            legend=dict(font=dict(size=12)),
+            margin=dict(l=50, r=50, t=80, b=50),
+            hovermode='x unified',
             template='plotly_white'
         )
 
@@ -158,4 +187,5 @@ def ejecutar_modelo(n_clicks, departamento, municipio, fecha):
 
 # Ejecutar la aplicación
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    #app.run_server(debug=True)
+    app.run(debug=True)
